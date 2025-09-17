@@ -1,0 +1,65 @@
+# Database files
+*.db
+*.sql
+*.sqlite
+*.sqlite3
+audiobooks.db
+
+# Upload directories
+uploads/
+*.m4a
+*.mp3
+*.flac
+*.wav
+
+# Environment files with API keys
+.env
+.env.local
+.env.*.local
+.env.production
+.env.development
+.env.test
+.env.production.local
+.env.development.local
+.env.test.local
+.env.secrets.local
+.env.backup
+.env.old
+.env.bak
+.env.example
+.env.template
+.env.sample
+.env.override
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.pytest_cache/
+.coverage
+
+#Virtual environment
+venv/
+env/
+.venv/
+
+# Node.js
+node_modules/
+.next/
+dist/
+build/
+out/
+.tsbuildinfo
+
+# OS Files
+.DS_Store
+.DS_Store?
+._*
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+
+
