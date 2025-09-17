@@ -19,6 +19,8 @@ async def upload_audiobook(
     """Upload an audiobook file with style prompt"""
     
     # Save file
+    print("Saving file...")
+    print("File:", file.filename,file.content_type);
     filename, file_path = await storage_service.save_audio_file(file)
     
     # Create database record

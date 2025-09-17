@@ -21,14 +21,15 @@ export function useAudiobookUpload(): UseAudiobookUploadReturn {
 		setError(null);
 
 		try {
-			if (!file.type.includes('mp4') && !file.name.toLowerCase().endsWith('.m4a')) {
-				throw new Error('Invalid file type. Please upload an M4A file.');
-			}
+		//	if (!file.type.includes('mp4') && !file.name.toLowerCase().endsWith('.m4a')) {
+		//		throw new Error('Invalid file type. Please upload an M4A file.');
+		//	}
 			const response = await apiService.uploadAudiobook(file, stylePrompt);
 			return response;
 		} catch (err) {
 			const errorMessage = err instanceof Error ? err.message : 'Upload failed';
 			setError(errorMessage);
+			console.error('Upload error:', err);
 			return null;
 		} finally {
 			setIsUploading(false);
