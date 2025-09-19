@@ -62,4 +62,6 @@ logs/
 *.log
 
 
+# Design folder
+./design/
 

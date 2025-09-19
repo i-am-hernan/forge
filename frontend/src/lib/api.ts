@@ -55,8 +55,20 @@ class ApiService {
     return `${this.baseUrl}/audiobooks/${audiobookId}/audio`;
   }
 
-  getImageUrl(filename: string): string {
-    return `${this.baseUrl}/uploads/images/${filename}`;
+  getImageUrl(audiobookId: number, filename: string): string {
+    return `${this.baseUrl}/audiobooks/${audiobookId}/images/${filename}`;
+  }
+
+  async generateImage(audiobookId: number, timestamp: number): Promise<any> {
+    const formData = new FormData();
+    formData.append('timestamp', timestamp.toString());
+
+    const response = await fetch(`${this.baseUrl}/audiobooks/${audiobookId}/generate-image`, {
+      method: 'POST',
+      body: formData,
+    });
+
+    return this.handleResponse<any>(response);
   }
 }
 
