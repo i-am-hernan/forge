@@ -1,8 +1,9 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException
-from fastapi.responses import FileResponse
+from fastapi import APIRouter, Depends, UploadFile, File, Form, HTTPException, Request
+from fastapi.responses import FileResponse, StreamingResponse
 from sqlalchemy.orm import Session
 from typing import List
 import os
+import re
 
 from models.database import get_db, Audiobook, GeneratedImage
 from models.schemas import AudiobookResponse, AudiobookWithImages, UploadResponse
@@ -78,20 +79,76 @@ async def delete_audiobook(audiobook_id: int, db: Session = Depends(get_db)):
     return {"message": "Audiobook deleted successfully"}
 
 @router.get("/{audiobook_id}/audio")
-async def serve_audio(audiobook_id: int, db: Session = Depends(get_db)):
-    """Serve audio file for playback"""
-    
+async def serve_audio(audiobook_id: int, request: Request, db: Session = Depends(get_db)):
+    """Serve audio file for playback with range request support"""
+
     audiobook = db.query(Audiobook).filter(Audiobook.id == audiobook_id).first()
     if not audiobook:
         raise HTTPException(status_code=404, detail="Audiobook not found")
-    
+
     if not os.path.exists(audiobook.file_path):
         raise HTTPException(status_code=404, detail="Audio file not found")
-    
-    return FileResponse(
-        audiobook.file_path,
-        media_type="audio/mp4",
-        filename=audiobook.original_name
+
+    file_size = os.path.getsize(audiobook.file_path)
+    range_header = request.headers.get("range")
+
+    headers = {
+        "Accept-Ranges": "bytes",
+        "Content-Length": str(file_size),
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "GET",
+        "Access-Control-Allow-Headers": "*",
+        "Access-Control-Expose-Headers": "Accept-Ranges, Content-Length, Content-Range",
+    }
+
+    # Handle range requests
+    if range_header:
+        range_match = re.search(r"bytes=(\d+)-(\d*)", range_header)
+        if range_match:
+            start = int(range_match.group(1))
+            end = int(range_match.group(2)) if range_match.group(2) else file_size - 1
+
+            if start >= file_size:
+                raise HTTPException(status_code=416, detail="Range not satisfiable")
+
+            end = min(end, file_size - 1)
+            content_length = end - start + 1
+
+            headers.update({
+                "Content-Range": f"bytes {start}-{end}/{file_size}",
+                "Content-Length": str(content_length),
+            })
+
+            def iter_file(start: int, end: int):
+                with open(audiobook.file_path, "rb") as f:
+                    f.seek(start)
+                    remaining = end - start + 1
+                    while remaining:
+                        chunk_size = min(8192, remaining)
+                        chunk = f.read(chunk_size)
+                        if not chunk:
+                            break
+                        remaining -= len(chunk)
+                        yield chunk
+
+            return StreamingResponse(
+                iter_file(start, end),
+                status_code=206,
+                headers=headers,
+                media_type="audio/mp4"
+            )
+
+    # Full file response for non-range requests
+    def iter_file():
+        with open(audiobook.file_path, "rb") as f:
+            while chunk := f.read(8192):
+                yield chunk
+
+    return StreamingResponse(
+        iter_file(),
+        status_code=200,
+        headers=headers,
+        media_type="audio/mp4"
     )
 
 @router.post("/{audiobook_id}/generate-image")
@@ -192,5 +249,10 @@ async def serve_image(audiobook_id: int, image_filename: str, db: Session = Depe
     return FileResponse(
         image.image_path,
         media_type="image/png",
-        filename=image_filename
+        filename=image_filename,
+        headers={
+            "Access-Control-Allow-Origin": "*",
+            "Access-Control-Allow-Methods": "GET",
+            "Access-Control-Allow-Headers": "*",
+        }
     )

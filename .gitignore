@@ -65,3 +65,5 @@ logs/
 # Design folder
 design/
 
+#AI Agents 
+claude.md

@@ -46,9 +46,20 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
   }, [isPlaying, play, pause]);
 
   const seekTo = useCallback((time: number) => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = time;
-      setCurrentTime(time);
+    if (audioRef.current && !isNaN(audioRef.current.duration)) {
+      const audio = audioRef.current;
+      const seekTime = Math.max(0, Math.min(time, audio.duration));
+
+      console.log('Seeking to:', seekTime, 'Duration:', audio.duration, 'ReadyState:', audio.readyState);
+
+      try {
+        audio.currentTime = seekTime;
+        // Don't manually set currentTime state - let the timeupdate event handle it
+      } catch (error) {
+        console.error('Seek failed:', error);
+      }
+    } else {
+      console.log('Cannot seek: audio not ready or duration not available');
     }
   }, []);
 
@@ -71,30 +82,75 @@ export function useAudioPlayer(): UseAudioPlayerReturn {
     const audio = audioRef.current;
     if (!audio) return;
 
-    const handleTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const handleDurationChange = () => setDuration(audio.duration);
-    const handleLoadStart = () => setIsLoading(true);
-    const handleCanPlay = () => setIsLoading(false);
-    const handleEnded = () => setIsPlaying(false);
-    const handlePlay = () => setIsPlaying(true);
-    const handlePause = () => setIsPlaying(false);
+    const handleTimeUpdate = () => {
+      console.log('Time update:', audio.currentTime);
+      setCurrentTime(audio.currentTime);
+    };
+    const handleDurationChange = () => {
+      console.log('Duration changed:', audio.duration);
+      setDuration(audio.duration);
+    };
+    const handleLoadStart = () => {
+      console.log('Load start - audio reloading');
+      setIsLoading(true);
+    };
+    const handleCanPlay = () => {
+      console.log('Can play');
+      setIsLoading(false);
+    };
+    const handleCanPlayThrough = () => {
+      console.log('Can play through');
+      setIsLoading(false);
+    };
+    const handleEnded = () => {
+      console.log('Audio ended');
+      setIsPlaying(false);
+    };
+    const handlePlay = () => {
+      console.log('Audio play');
+      setIsPlaying(true);
+    };
+    const handlePause = () => {
+      console.log('Audio pause');
+      setIsPlaying(false);
+    };
+    const handleWaiting = () => {
+      console.log('Audio waiting/buffering');
+      setIsLoading(true);
+    };
+    const handleSeeking = () => {
+      console.log('Audio seeking started');
+      setIsLoading(true);
+    };
+    const handleSeeked = () => {
+      console.log('Audio seeking completed');
+      setIsLoading(false);
+    };
 
     audio.addEventListener('timeupdate', handleTimeUpdate);
     audio.addEventListener('durationchange', handleDurationChange);
     audio.addEventListener('loadstart', handleLoadStart);
     audio.addEventListener('canplay', handleCanPlay);
+    audio.addEventListener('canplaythrough', handleCanPlayThrough);
     audio.addEventListener('ended', handleEnded);
     audio.addEventListener('play', handlePlay);
     audio.addEventListener('pause', handlePause);
+    audio.addEventListener('waiting', handleWaiting);
+    audio.addEventListener('seeking', handleSeeking);
+    audio.addEventListener('seeked', handleSeeked);
 
     return () => {
       audio.removeEventListener('timeupdate', handleTimeUpdate);
       audio.removeEventListener('durationchange', handleDurationChange);
       audio.removeEventListener('loadstart', handleLoadStart);
       audio.removeEventListener('canplay', handleCanPlay);
+      audio.removeEventListener('canplaythrough', handleCanPlayThrough);
       audio.removeEventListener('ended', handleEnded);
       audio.removeEventListener('play', handlePlay);
       audio.removeEventListener('pause', handlePause);
+      audio.removeEventListener('waiting', handleWaiting);
+      audio.removeEventListener('seeking', handleSeeking);
+      audio.removeEventListener('seeked', handleSeeked);
     };
   }, []);
 

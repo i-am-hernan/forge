@@ -8,6 +8,8 @@ import { Audiobook, UploadResponse } from '@/lib/types';
 export default function HomePage() {
   const [currentAudiobook, setCurrentAudiobook] = useState<Audiobook | null>(null);
 
+  console.log('🎵 Audiobook Image Generator - Page Loaded', { timestamp: new Date().toISOString() });
+
   const handleUploadSuccess = (response: UploadResponse) => {
     setCurrentAudiobook(response.audiobook);
   };
@@ -25,7 +27,7 @@ export default function HomePage() {
             /* Upload State */
             <div className="flex flex-col items-center space-y-6">
               <AudioUpload onUploadSuccess={handleUploadSuccess} />
-              
+
               <div className="text-center text-sm text-gray-500 max-w-md">
                 <p className="mb-2">
                   <strong>How it works:</strong>
@@ -52,14 +54,7 @@ export default function HomePage() {
                   Upload New Audiobook
                 </button>
               </div>
-              
               <AudioPlayer audiobook={currentAudiobook} />
-              
-              <div className="text-center text-sm text-gray-500">
-                <p>
-                  Click Generate Image while listening to create an AI image based on the current audio content
-                </p>
-              </div>
             </div>
           )}
         </div>

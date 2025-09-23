@@ -51,10 +51,6 @@ class ApiService {
     }
   }
 
-  getAudioUrl(audiobookId: number): string {
-    return `${this.baseUrl}/audiobooks/${audiobookId}/audio`;
-  }
-
   getImageUrl(audiobookId: number, filename: string): string {
     return `${this.baseUrl}/audiobooks/${audiobookId}/images/${filename}`;
   }

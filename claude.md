@@ -364,3 +364,4 @@ npm run dev
   export REPLICATE_API_TOKEN="your_replicate_token"
 
   The system now supports the complete workflow: upload audiobook → listen → generate contextual AI images → navigate via timeline markers!
+- Write code in ES2017 or later. I want to use arrow functions when appropriate.
